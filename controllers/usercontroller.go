@@ -72,3 +72,34 @@ func Updateusers(c *fiber.Ctx) error{
 	}
 	return c.Status(fiber.StatusOK).JSON(user)
 }
+
+func Deleteuser(c *fiber.Ctx) error{
+	id := c.Params("id")
+	var user models.User
+	if err:=database.DB.Where("id=?",id).First(&user).Error;err!=nil{
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error":"User not found"})
+	}
+	if err:=database.DB.Delete(&user).Error;err!=nil{
+		log.Println("Database error", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message":"User deleted successfully"})
+}
+
+func GetAllusers(c *fiber.Ctx) error{
+	var users []models.User
+	if err:=database.DB.Find(&users).Error;err!=nil{
+		log.Println("Database error", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
+	}
+	return c.Status(fiber.StatusOK).JSON(users)
+}
+
+func Getuser(c *fiber.Ctx) error{
+	id := c.Params("id")
+	var user models.User
+	if err:=database.DB.Where("id=?",id).First(&user).Error;err!=nil{
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error":"User not found"})
+	}
+	return c.Status(fiber.StatusOK).JSON(user)
+}
