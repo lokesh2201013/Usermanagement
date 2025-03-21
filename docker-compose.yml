@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 9910994194lokesh
+      POSTGRES_DB: usermanagement
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  fiber_app:
+    build: .
+    container_name: fiber_app
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: "host=postgres user=postgres password=9910994194lokesh dbname=usermanagement port=5432 sslmode=disable"
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
