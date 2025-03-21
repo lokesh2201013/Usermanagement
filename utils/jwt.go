@@ -14,7 +14,7 @@ func GenerateJWT(ID uuid.UUID)(string,error){
 	claims:=jwt.MapClaims{
 		"exp":time.Now().Add(24*time.Hour).Unix(),
 		"iss":"usermanagement",
-		"sub":ID,
+		"ID":ID,
 	}
 
 	token:=jwt.NewWithClaims(jwt.SigningMethodHS256,claims)

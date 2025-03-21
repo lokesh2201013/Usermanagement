@@ -32,7 +32,7 @@ func Register(c *fiber.Ctx)error{
 		log.Println("Database error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
 	}
-	return c.Status(fiber.StatusCreated).JSON(user)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Admin created successfully"})
 }
 
 func Login(c *fiber.Ctx) error{

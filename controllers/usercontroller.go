@@ -15,7 +15,7 @@ func Createusers(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
 	}
     
-	adminID, ok := c.Locals("admin_id").(string) // Convert to string first
+	adminID, ok := c.Locals("ID").(string) // Convert to string first
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 	} 
@@ -25,7 +25,7 @@ func Createusers(c *fiber.Ctx) error {
 	}
 
 	
-	var existingUser string
+	var existingUser models.User
 	if err:=database.DB.Where("email=?",user.Email).First(&existingUser).Error;err==nil{
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Email already in use"})
 	}
@@ -48,27 +48,58 @@ func Updateusers(c *fiber.Ctx) error{
 	if err:= c.BodyParser(&user); err!=nil{
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error":"Invalid input"})
 	}
-	
-	adminID, ok := c.Locals("admin_id").(string) // Convert to string first
+	id:= c.Params("id")
+	adminID, ok := c.Locals("ID").(string) // Convert to string first
+
+	newName:=user.Name
+	newEmail:=user.Email
+	newAge:=user.Age
+
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 	} 
 	parsedAdminID, err := uuid.Parse(adminID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid admin ID"})
+
 	}
 
 	var existingUser models.User
-	if err:=database.DB.Where("id=?",user.ID).First(&existingUser).Error;err!=nil{
+	if err:=database.DB.Where("id=?",id).First(&existingUser).Error;err!=nil{
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error":"User not found"})
 	}
 	
 	user.UpdatedAt = time.Now()
 	user.UpdatedBy = parsedAdminID
 
-	if err:=database.DB.Save(&user).Error;err!=nil{
-		log.Println("Database error", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
+    if newName!=""{
+		query:="UPDATE users SET name = ?, updated_at=? , updated_by=? WHERE id = ?"
+		if err:=database.DB.Exec(query,newName,user.UpdatedAt,user.UpdatedBy,user.ID).Error;err!=nil{
+			log.Println("Database error", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
+		}
+	}
+
+	if newEmail!=""{
+		query:="UPDATE users SET email = ? ,updated_at=?, updated_by=? WHERE id = ?"
+
+		var emailCheck models.User
+		if err := database.DB.Where("email = ? AND id != ?", user.Email, user.ID).First(&emailCheck).Error; err == nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Email already in use"})
+		}
+
+		if err:=database.DB.Exec(query,newEmail,user.UpdatedAt,user.UpdatedBy,user.ID).Error;err!=nil{
+			log.Println("Database error", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
+		}
+	}
+
+	if newAge!=0{
+		query:="UPDATE users SET age = ? ,updated_at=? ,updated_by=? WHERE id = ?"
+		if err:=database.DB.Exec(query,newAge,user.UpdatedAt,user.UpdatedBy,user.ID).Error;err!=nil{
+			log.Println("Database error", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal server error"})
+		}
 	}
 	return c.Status(fiber.StatusOK).JSON(user)
 }
